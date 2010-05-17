@@ -136,3 +136,4 @@ class GMapLocation(forms.MultiWidget):
                 }
 
         return mark_safe(result)
+
