@@ -9,6 +9,7 @@ _lat_field_name = lambda x: '%s_lat' % x
 _lon_field_name = lambda x: '%s_lon' % x
 
 
+
 class Position(object):
     def __init__(self, instance, lat_field_name, lon_field_name):
         self.instance = instance
@@ -131,7 +132,7 @@ class PositionField(models.FloatField):
             return value
 
     def get_internal_type(self):
-        return "PositionField"
+        return "FloatField"
 
     def to_python(self, value):
         if value is None:
@@ -145,6 +146,14 @@ class PositionField(models.FloatField):
         }
         defaults.update(kw)
         return super(PositionField, self).formfield(**defaults) 
+
+    def south_field_triple(self):
+        from south.modelsinspector import introspector
+        field_class = 'django.db.models.fields.FloatField'
+        args, kwargs = introspector(self)
+        return (field_class, args, kwargs)
+
+
 
 
 class LocationField(models.CharField):
@@ -207,3 +216,13 @@ class LocationField(models.CharField):
         }
         defaults.update(kw)
         return super(LocationField, self).formfield(**defaults) 
+
+
+# south support
+try:
+    import south
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules([], ["^geoloc\.fields\.PositionField"])
+    add_introspection_rules([], ["^geoloc\.fields\.LocationField"])
+except:
+    pass
