@@ -35,8 +35,8 @@ class Position(object):
 
 class Location(Position):
     def __init__(self, instance, lat_field, lon_field, location_field):
-        super(Location, self).__init__(instance, lat_field, lon_field)
         self.location_field_name = location_field
+        super(Location, self).__init__(instance, lat_field, lon_field)
     def _get_name(self):
         return self.instance.__dict__[self.location_field_name]
     def _set_name(self, name):
