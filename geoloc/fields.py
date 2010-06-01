@@ -15,7 +15,7 @@ class Position(object):
         self.instance = instance
         self.lat_field_name = lat_field_name
         self.lon_field_name = lon_field_name
-        self.name = ''
+        #self.name = ''
 
     def _get_lat(self):
         return self.instance.__dict__[self.lat_field_name]
@@ -40,7 +40,7 @@ class Location(Position):
     def _get_name(self):
         return self.instance.__dict__[self.location_field_name]
     def _set_name(self, name):
-        setattr(self.instance, self.location_field_name, name)
+        self.instance.__dict__[self.location_field_name] = name
     name = property(_get_name, _set_name)
 
     def __unicode__(self):

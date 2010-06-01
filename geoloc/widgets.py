@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.safestring import mark_safe
 from geoloc import settings
+from django.utils.translation import ugettext_lazy as _
 
 class GMapLocation(forms.MultiWidget):
     class Media:
@@ -11,8 +12,10 @@ class GMapLocation(forms.MultiWidget):
             forms.HiddenInput(attrs={'class':'gmap_lat'}), 
             forms.HiddenInput(attrs={'class':'gmap_lon'}),
         )
+        attrs = attrs or {}
+        self.zoom_input = attrs.pop('zoom_input', None)
         super(GMapLocation, self).__init__(widgets,
-                attrs)
+                attrs=attrs)
 
     def decompress(self, location):
         if location:
@@ -24,10 +27,13 @@ class GMapLocation(forms.MultiWidget):
         if not isinstance(value, (list, tuple)):
             value = self.decompress(value)
         location, lat, lon = value
+        zoom_input = self.zoom_input or '%s_zoom' % name
+        zoom = attrs.pop('zoom', settings.GMAP_DEFAULT_ZOOM)
+
         result = result + u'''
         <input type="button" id="%(name)s_search" value="%(search_label)s" />
         <div id="%(name)s_map_box" class="map-overlay">
-            <div id="%(name)s_map_message"></div>
+            <div id="id_%(name)s_map_message" class="gmap_message"></div>
             <div id="%(name)s_map"></div>
             </div>
             <script type="text/javascript">
@@ -35,6 +41,7 @@ class GMapLocation(forms.MultiWidget):
                 var map_%(name)s_types = [G_NORMAL_MAP, G_SATELLITE_MAP, G_PHYSICAL_MAP];
                 map_%(name)s = new GMap2(document.getElementById('%(name)s_map'),
                     {mapTypes: map_%(name)s_types});
+                this.map_%(name)s = map_%(name)s;
                 map_%(name)s.addControl(new GLargeMapControl());
                 map_%(name)s.addControl(new GScaleControl());
                 map_%(name)s.addControl(new GMapTypeControl());
@@ -116,23 +123,33 @@ class GMapLocation(forms.MultiWidget):
                     map_%(name)s.on_change_location($('#id_%(name)s_0').val());
                 });
 
+                GEvent.addListener(map_%(name)s, 'zoomend', function(oldzoom, zoom) {
+                    if(map_%(name)s.store_zoom) {
+                        $('#%(zoom_input)s').val(zoom);
+                    }
+                });
+
+
                 GEvent.addListener(map_%(name)s.loc_marker, 'dragend', function() {
                     map_%(name)s.accept_point(this);
                 });
 
+                var zoom = parseInt($('#%(zoom_input)s').val());
+                if(!zoom) zoom = %(zoom)d;
                 map_%(name)s.addOverlay(map_%(name)s.loc_marker);
-                map_%(name)s.setCenter(new GLatLng(%(lat)s, %(lon)s), %(zoom)d);
+                map_%(name)s.setCenter(new GLatLng(%(lat)s, %(lon)s), zoom);
             });
                     
             </script>
             ''' % {
                     'name': name, 
                     'location': location,
-                    'search_label': 'Search on map', 
-                    'many_places_message': 'Select only one location from result',
+                    'search_label': _('Search on map'), 
+                    'many_places_message': _('Select only one location from result'),
                     'lat': lat or settings.MAP_DEFAULT_COORDS[0], 
                     'lon': lon or settings.MAP_DEFAULT_COORDS[1],
-                    'zoom': settings.GMAP_DEFAULT_ZOOM,
+                    'zoom': zoom,
+                    'zoom_input': zoom_input,
                 }
 
         return mark_safe(result)
