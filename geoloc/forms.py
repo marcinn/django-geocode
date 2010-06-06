@@ -27,9 +27,11 @@ class LocationField(forms.MultiValueField):
         widget = kw.pop('widget', widgets.GMapLocation)
         super(LocationField, self).__init__(
                 fields=(name_field, lat_field, lon_field,),
-                widget=widget)
+                widget=widget, required=kw.get('required', False))
 
     def compress(self, data):
+        if not data:
+            return None
         return Location(data[0], data[1], data[2])
 
 

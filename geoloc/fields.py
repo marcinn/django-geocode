@@ -44,7 +44,7 @@ class Location(Position):
     name = property(_get_name, _set_name)
 
     def __unicode__(self):
-        return self.name
+        return self.name or ''
 
 
 
@@ -173,9 +173,9 @@ class LocationField(models.CharField):
 
     def contribute_to_class(self, cls, name):
         if self.add_lat_lon_fields:
-            lon_field = models.FloatField()
+            lon_field = models.FloatField(null=self.null)
             lon_field.creation_counter = self.creation_counter + 1
-            lat_field = models.FloatField()
+            lat_field = models.FloatField(null=self.null)
             lat_field.creation_counter = self.creation_counter + 1
             cls.add_to_class(self._lon_field_name or _lon_field_name(name), lon_field)
             cls.add_to_class(self._lat_field_name or _lat_field_name(name), lat_field)
