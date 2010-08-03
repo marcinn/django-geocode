@@ -8,11 +8,13 @@ class GMapLocation(forms.MultiWidget):
         js = ('http://maps.google.com/maps?file=api&amp;v=2&amp;key=%s' % settings.GMAP_API_KEY,)
 
     def __init__(self, attrs=None):
-        widgets = (forms.TextInput,
+        widgets = (
+            forms.TextInput(),
             forms.HiddenInput(attrs={'class':'gmap_lat'}), 
             forms.HiddenInput(attrs={'class':'gmap_lon'}),
         )
         attrs = attrs or {}
+
         self.zoom_input = attrs.pop('zoom_input', None)
         super(GMapLocation, self).__init__(widgets,
                 attrs=attrs)

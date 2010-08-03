@@ -8,7 +8,7 @@ class Position(object):
         self.name = ''
 
     def __unicode__(self):
-        return unicode(self.lat)
+        return '%s, %s' % (self.lat, self.lon)
 
 
 class Location(object):
@@ -39,16 +39,13 @@ class PositionField(forms.MultiValueField):
     widget = widgets.GMapLocation
 
     def __init__(self, *args, **kw):
-        name_field = forms.CharField(*args, **kw)
         lat_field = forms.FloatField(required=False)
         lon_field = forms.FloatField(required=False)
         super(PositionField, self).__init__(
-                fields=(lat_field, lon_field,), *args, **kw)
-
-    def clean(self, value):
-        return super(PositionField, self).clean(value[1:])
+                fields=(forms.CharField(required=False), lat_field, lon_field,), 
+                required=kw.pop('required', False))
 
     def compress(self, data):
         if not data:
             return None
-        return Position(data[0], data[1])
+        return Position(data[1], data[2])

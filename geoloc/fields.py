@@ -13,9 +13,11 @@ _lon_field_name = lambda x: '%s_lon' % x
 class Position(object):
     def __init__(self, instance, lat_field_name, lon_field_name):
         self.instance = instance
+        assert lat_field_name
+        assert lon_field_name
         self.lat_field_name = lat_field_name
         self.lon_field_name = lon_field_name
-        #self.name = ''
+        self.name = ''
 
     def _get_lat(self):
         return self.instance.__dict__[self.lat_field_name]
@@ -51,14 +53,13 @@ class Location(Position):
 class PositionDescriptor(object):
     def __init__(self, field):
         self.field = field
-        self.lat_column = field._lat_field_name or field.name
-        self.lon_column = field._lon_field_name
+        self.lat_column = field._lat_field_name or _lat_field_name(field.name)
+        self.lon_column = field._lon_field_name or _lon_field_name(field.name)
 
     def __get__(self, instance, owner):
         if instance is None:
             raise AttributeError('Can only be accessed via an instance.')
-        return geoforms.Position(instance.__dict__[self.lat_column],
-                instance.__dict__[self.lon_column])
+        return Position(instance, self.lat_column, self.lon_column)
    
     def __set__(self, obj, value):
         if hasattr(value, 'lat') and hasattr(value, 'lon'):
@@ -70,7 +71,7 @@ class PositionDescriptor(object):
         else:
             obj.__dict__[self.lat_column] = value
             return
-            #raise TypeError('Invalid position value type. Use Position or tuple.')
+            raise TypeError('Invalid position value type. Use Position or tuple.')
         obj.__dict__[self.lat_column] = lat
         obj.__dict__[self.lon_column] = lon
 
@@ -104,21 +105,30 @@ class LocationDescriptor(object):
             
 class PositionField(models.FloatField):
     def __init__(self, *args, **kw):
-        self._lat_field_name = kw.pop('db_column', None)
-        self._lon_field_name = kw.pop('db_column_lon', 'longitude')
+        self._lat_field_name = kw.get('db_column')
+        self._lon_field_name = kw.pop('db_column_lon', None)
         super(PositionField, self).__init__(*args, **kw)
 
+    @property
+    def db_column_lat(self):
+        return self._lat_field_name or _lat_field_name(self.name)
+
+    @property
+    def db_column_lon(self):
+        return self._lon_field_name or _lon_field_name(self.name)
+
+
     def contribute_to_class(self, cls, name):
-        lon_field = models.FloatField(null=True, blank=True)
+        lon_field = models.FloatField(null=True, blank=True, editable=False)
         lon_field.creation_counter = self.creation_counter + 1
-        cls.add_to_class(self._lon_field_name, lon_field)
+        cls.add_to_class(self._lon_field_name or _lon_field_name(name), lon_field)
         super(PositionField, self).contribute_to_class(cls, name)
         setattr(cls, self.name, PositionDescriptor(self))
 
     def pre_save(self, model_instance, add):
         position = super(PositionField, self).pre_save(model_instance, add)
         lon = position.lon
-        setattr(model_instance, self._lon_field_name, lon)
+        setattr(model_instance, self.db_column_lon, lon)
         return position.lat
 
     def value_to_string(self, obj):
@@ -165,9 +175,9 @@ class LocationField(models.CharField):
 
     def contribute_to_class(self, cls, name):
         if self.add_lat_lon_fields:
-            lon_field = models.FloatField(null=self.null)
+            lon_field = models.FloatField(null=self.null,editable=False)
             lon_field.creation_counter = self.creation_counter + 1
-            lat_field = models.FloatField(null=self.null)
+            lat_field = models.FloatField(null=self.null,editable=False)
             lat_field.creation_counter = self.creation_counter + 1
             cls.add_to_class(self._lon_field_name or _lon_field_name(name), lon_field)
             cls.add_to_class(self._lat_field_name or _lat_field_name(name), lat_field)
