@@ -147,14 +147,6 @@ class PositionField(models.FloatField):
         defaults.update(kw)
         return super(PositionField, self).formfield(**defaults) 
 
-    def south_field_triple(self):
-        from south.modelsinspector import introspector
-        field_class = 'django.db.models.fields.FloatField'
-        args, kwargs = introspector(self)
-        return (field_class, args, kwargs)
-
-
-
 
 class LocationField(models.CharField):
     def __init__(self, *args, **kw):
@@ -222,7 +214,18 @@ class LocationField(models.CharField):
 try:
     import south
     from south.modelsinspector import add_introspection_rules
-    add_introspection_rules([], ["^geoloc\.fields\.PositionField"])
-    add_introspection_rules([], ["^geoloc\.fields\.LocationField"])
+    add_introspection_rules(rules=[((PositionField,),
+            [], {
+                'db_column': ('_lat_field_name', {}),
+                'db_column_lon': ('_lon_field_name', {}),
+            })],
+            patterns=['geoloc\.fields\.'])
+    add_introspection_rules(rules=[((LocationField,),
+            [], {
+                'db_column_lat': ('_lat_field_name', {}),
+                'db_column_lon': ('_lon_field_name', {}),
+            })],
+            patterns=['geoloc\.fields\.'])
+
 except:
     pass
