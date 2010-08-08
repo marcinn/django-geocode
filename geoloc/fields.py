@@ -119,7 +119,8 @@ class PositionField(models.FloatField):
 
 
     def contribute_to_class(self, cls, name):
-        lon_field = models.FloatField(null=True, blank=True, editable=False)
+        lon_field = models.FloatField(null=True, blank=True, editable=False,
+                db_index=self.db_index)
         lon_field.creation_counter = self.creation_counter + 1
         cls.add_to_class(self._lon_field_name or _lon_field_name(name), lon_field)
         super(PositionField, self).contribute_to_class(cls, name)
@@ -175,9 +176,11 @@ class LocationField(models.CharField):
 
     def contribute_to_class(self, cls, name):
         if self.add_lat_lon_fields:
-            lon_field = models.FloatField(null=self.null,editable=False)
+            lon_field = models.FloatField(null=self.null,editable=False,
+                    db_index=self.db_index)
             lon_field.creation_counter = self.creation_counter + 1
-            lat_field = models.FloatField(null=self.null,editable=False)
+            lat_field = models.FloatField(null=self.null,editable=False,
+                    db_index=self.db_index)
             lat_field.creation_counter = self.creation_counter + 1
             cls.add_to_class(self._lon_field_name or _lon_field_name(name), lon_field)
             cls.add_to_class(self._lat_field_name or _lat_field_name(name), lat_field)
