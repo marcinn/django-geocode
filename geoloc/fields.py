@@ -17,7 +17,6 @@ class Position(object):
         assert lon_field_name
         self.lat_field_name = lat_field_name
         self.lon_field_name = lon_field_name
-        self.name = ''
 
     def _get_lat(self):
         return self.instance.__dict__[self.lat_field_name]
@@ -31,6 +30,13 @@ class Position(object):
     def _set_lon(self, lon):
         setattr(self.instance, self.lon_field_name, lon)
 
+    def _get_name(self):
+        return ''
+
+    def _set_name(self, val):
+        pass
+
+    name = property(_get_name, _set_name)
     lat = property(_get_lat, _set_lat)
     lon = property(_get_lon, _set_lon)
 
