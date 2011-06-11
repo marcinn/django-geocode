@@ -55,7 +55,7 @@ class Location(Position):
         return self.name or ''
 
     def __len__(self):
-        return len(self._get_name())
+        return len(unicode(self))
 
 
 class PositionDescriptor(object):

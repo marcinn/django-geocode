@@ -36,14 +36,17 @@ class LocationField(forms.MultiValueField):
 
 
 class PositionField(forms.MultiValueField):
-    widget = widgets.GMapLocation
 
     def __init__(self, *args, **kw):
         lat_field = forms.FloatField(required=False)
         lon_field = forms.FloatField(required=False)
+        if not 'widget' in kw:
+            kw['widget'] = widgets.GMapLocation
+        if not 'required' in kw:
+            kw['required'] = False
         super(PositionField, self).__init__(
                 fields=(forms.CharField(required=False), lat_field, lon_field,), 
-                required=kw.pop('required', False))
+                **kw)
 
     def compress(self, data):
         if not data:

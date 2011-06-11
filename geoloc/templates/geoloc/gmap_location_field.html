@@ -1,0 +1,111 @@
+<input type="button" id="{{ name }}_search" value="{{ search_label }}" />
+<div id="{{ name }}_map_box" class="map-overlay">
+    <div id="id_{{ name }}_map_message" class="gmap_message"></div>
+    <div id="{{ name }}_map"></div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function() {
+            var map_{{ name }}_types = [G_NORMAL_MAP, G_SATELLITE_MAP, G_PHYSICAL_MAP];
+            map_{{ name }} = new GMap2(document.getElementById('{{ name }}_map'),
+                {mapTypes: map_{{ name }}_types});
+            this.map_{{ name }} = map_{{ name }};
+            map_{{ name }}.addControl(new GLargeMapControl());
+            map_{{ name }}.addControl(new GScaleControl());
+            map_{{ name }}.addControl(new GMapTypeControl());
+            map_{{ name }}.message_box = $('#id_{{ name }}_map_message');
+            map_{{ name }}.store_zoom = true;
+            map_{{ name }}.lat_input = $('#id_{{ name }}_1');
+            map_{{ name }}.lon_input = $('#id_{{ name }}_2');
+            map_{{ name }}.geocoder = new GClientGeocoder();
+            map_{{ name }}.geocoder.setCache(new GGeocodeCache());
+            map_{{ name }}.loc_marker = new GMarker(
+                new GLatLng({{ lat }}, {{ lon }}), {draggable: true});
+            map_{{ name }}.accept_point = function(ev) {
+            var map = this;
+            if(!$('#id_{{ name }}_0').val()) {
+            $('#id_{{ name }}_0').val(ev.getTitle());
+            }
+            map.store_zoom = true;
+            $('#id_{{ name }}_1').val(ev.getLatLng().lat());
+            $('#id_{{ name }}_2').val(ev.getLatLng().lng());
+            };
+            map_{{ name }}.on_change_location = function(keyword) {
+                var bounds = new GLatLngBounds();
+                var map = this;
+                if(!keyword) return;
+                map.geocoder.getLocations(keyword, function(points) {
+                        map.clearOverlays();
+                        if($(points.Placemark).length==1) {
+                        var _p = points.Placemark[0].Point.coordinates;
+                        map.lat_input.val(_p[1]);
+                        map.lon_input.val(_p[0]);
+                        map.store_zoom = true;
+                        } else {
+                        map.store_zoom = false;
+                        map.message_box.html('{{ many_places_message }}').show();
+                        }
+
+                        $(points.Placemark).each(function() {
+                            var map = map_{{ name }};
+                            var point = new GLatLng(this.Point.coordinates[1],
+                                this.Point.coordinates[0]);
+                            bounds.extend(point);
+                            var address = this.address;
+                            var marker = new GMarker(point, {draggable: true, title: address});
+                            map.addOverlay(marker);
+                            function _on_multi_accept(ev) {
+                            map.message_box.hide();
+                            map.setCenter(this.getLatLng());
+                            map.clearOverlays();
+                            var marker = new GMarker(this.getLatLng(), {draggable: true, title: address});
+                            map.addOverlay(marker);
+                            GEvent.addListener(marker, 'dragend', function() {
+                                map.accept_point(this);
+                                });
+                            map.accept_point(this);
+                            if(map.getZoom()<11) {
+                            map.setZoom(11);
+                            }
+                            }
+                            GEvent.addListener(marker, "click", _on_multi_accept);
+                            GEvent.addListener(marker, "dragend", _on_multi_accept);
+                        });
+
+                        if(points.Placemark.length>1) {
+                            map.setCenter(bounds.getCenter(), map.getBoundsZoomLevel(bounds));
+                        } else if(points.Placemark.length==1){
+                            map.setCenter(bounds.getCenter(), 12);
+                        }
+                });
+            };
+
+            $('#id_{{ name }}_0').change(function() {
+                    if(!map_{{ name }}.lat_input.val() || 
+                        !map_{{ name }}.lon_input.val()) {
+                    map_{{ name }}.on_change_location($(this).val());
+                    }
+                    });
+
+            $('#{{ name }}_search').click(function(ev) {
+                    map_{{ name }}.on_change_location($('#id_{{ name }}_0').val());
+                    });
+
+            GEvent.addListener(map_{{ name }}, 'zoomend', function(oldzoom, zoom) {
+                    if(map_{{ name }}.store_zoom) {
+                    $('#{{ zoom_input }}').val(zoom);
+                    }
+                    });
+
+
+            GEvent.addListener(map_{{ name }}.loc_marker, 'dragend', function() {
+                    map_{{ name }}.accept_point(this);
+                    });
+
+            var zoom = parseInt($('#{{ zoom_input }}').val());
+            if(!zoom) zoom = {{ zoom }};
+            map_{{ name }}.addOverlay(map_{{ name }}.loc_marker);
+            map_{{ name }}.setCenter(new GLatLng({{ lat }}, {{ lon }}), zoom);
+    });
+
+</script>
+
