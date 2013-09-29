@@ -144,7 +144,7 @@ class PositionField(models.FloatField):
         value = self._get_val_from_obj(obj)
         return value.lat
 
-    def get_db_prep_value(self, value):
+    def get_db_prep_value(self, value, *args, **kw):
         try:
             return value.lat
         except AttributeError:
@@ -207,7 +207,7 @@ class LocationField(models.CharField):
         value = self._get_val_from_obj(obj)
         return value.name
 
-    def get_db_prep_value(self, value):
+    def get_db_prep_value(self, value, *args, **kw):
         try:
             return value.name
         except AttributeError:
